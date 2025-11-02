@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Comp2000RestuarantApp</string>
+    <string name="my_bookings">My Bookings</string>
+    <string name="book_a_new_table">Book a New Table</string>
+</resources>
