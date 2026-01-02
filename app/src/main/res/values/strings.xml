@@ -3,4 +3,27 @@
     <string name="app_name">Comp2000RestuarantApp</string>
     <string name="my_bookings">My Bookings</string>
     <string name="book_a_new_table">Book a New Table</string>
+
+    <!-- Staff Dashboard -->
+    <string name="staff_dashboard_title">Staff Dashboard</string>
+    <string name="staff_dashboard_subtitle">Quick access to primary tasks:</string>
+    <string name="action_manage_menu">Manage Menu</string>
+    <string name="action_view_reservations">View Reservations</string>
+
+    <!-- Menu Management -->
+    <string name="back_to_dashboard">&lt; Back to Dashboard</string>
+    <string name="menu_management_title">Menu Management</string>
+    <string name="action_add_new_item">+ Add New Item</string>
+    <string name="action_edit">[Edit]</string>
+    <string name="action_delete">[Delete]</string>
+
+    <!-- View Reservations -->
+    <string name="view_reservations_title">View Reservations</string>
+    <string name="action_view_details">[View Details]</string>
+    <string name="action_cancel">[Cancel]</string>
+
+    <!-- Staff Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="action_manage_notifications">Manage Notifications</string>
+    <string name="action_logout">Logout</string>
 </resources>
