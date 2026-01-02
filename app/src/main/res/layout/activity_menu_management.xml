@@ -10,7 +10,7 @@
         android:id="@+id/tvBack"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="&lt; Back to Dashboard"
+        android:text="@string/back_to_dashboard"
         android:textColor="?attr/colorPrimary"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Menu Management"
+        android:text="@string/menu_management_title"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="+ Add New Item"
+        android:text="@string/action_add_new_item"
         app:layout_constraintTop_toBottomOf="@id/divider" />
 
     <androidx.recyclerview.widget.RecyclerView
