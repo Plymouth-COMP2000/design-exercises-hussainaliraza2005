@@ -2,86 +2,127 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="@color/md_theme_background">
-<ImageButton
-    android:id="@+id/btn_back_to_bookings"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:src="@drawable/ic_arrow_back"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    app:tint="@color/md_theme_primary"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintStart_toStartOf="parent"/>
-<TextView
-    android:id="@+id/tv_book_table_title"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Book a Table"
-    android:textSize="28sp"
-    android:textStyle="bold"
-    android:textColor="@color/md_theme_onSurface"
-    app:layout_constraintTop_toBottomOf="@id/btn_back_to_bookings"
-    app:layout_constraintStart_toStartOf="parent"
-    android:layout_marginTop="16dp"/>
-<com.google.android.material.textfield.TextInputLayout
-    android:id="@+id/til_date"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Select Date"
-    android:layout_marginTop="24dp"
-    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-    app:endIconMode="custom"
-    app:endIconDrawable="@drawable/ic_calendar"
-    app:layout_constraintTop_toBottomOf="@id/tv_book_table_title">
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/et_date"
-        android:layout_width="match_parent"
+    android:background="@color/md_theme_background"
+    tools:context=".BookATableActivity">
+
+    <ImageButton
+        android:id="@+id/btn_back_to_bookings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_arrow_back"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back to My Bookings"
+        app:tint="@color/md_theme_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/tv_back_to_bookings"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:focusable="false"
-        android:inputType="none"/>
-</com.google.android.material.textfield.TextInputLayout>
-<com.google.android.material.textfield.TextInputLayout
-    android:id="@+id/til_time"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Select Time"
-    android:layout_marginTop="16dp"
-    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-    app:endIconMode="custom"
-    app:endIconDrawable="@drawable/ic_time"
-    app:layout_constraintTop_toBottomOf="@id/til_date">
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/et_time"
-        android:layout_width="match_parent"
+        android:text="Back to My Bookings"
+        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+        android:textColor="@color/md_theme_primary"
+        android:layout_gravity="center_vertical"
+        app:layout_constraintStart_toEndOf="@id/btn_back_to_bookings"
+        app:layout_constraintTop_toTopOf="@id/btn_back_to_bookings"
+        app:layout_constraintBottom_toBottomOf="@id/btn_back_to_bookings"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/tv_book_table_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:focusable="false"
-        android:inputType="none"/>
-</com.google.android.material.textfield.TextInputLayout>
-<com.google.android.material.textfield.TextInputLayout
-    android:id="@+id/til_guests"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:hint="Number of Guests"
-    android:layout_marginTop="16dp"
-    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-    app:layout_constraintTop_toBottomOf="@id/til_time">
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/et_guests"
-        android:layout_width="match_parent"
+        android:text="Book a Table"
+        android:textAppearance="@style/TextAppearance.Material3.DisplaySmall"
+        android:textColor="@color/md_theme_onSurface"
+        app:layout_constraintTop_toBottomOf="@id/btn_back_to_bookings"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="32dp"/>
+
+    <TextView
+        android:id="@+id/tv_book_table_prompt"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="number"/>
-</com.google.android.material.textfield.TextInputLayout>
-<Button
-    android:id="@+id/btn_confirm_booking"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Confirm Booking"
-    android:layout_marginTop="32dp"
-    android:paddingVertical="12dp"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/til_guests"
-    app:layout_constraintVertical_bias="0"/>
+        android:text="Choose date, time and guests"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        android:textColor="@color/md_theme_onSurfaceVariant"
+        app:layout_constraintTop_toBottomOf="@id/tv_book_table_title"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Select Date"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_calendar"
+        app:layout_constraintTop_toBottomOf="@id/tv_book_table_prompt"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:focusable="false"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Select Time"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:endIconMode="custom"
+        app:endIconDrawable="@drawable/ic_time"
+        app:layout_constraintTop_toBottomOf="@id/til_date"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:focusable="false"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_guests"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Number of Guests"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:layout_constraintTop_toBottomOf="@id/til_time"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_guests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_confirm_booking"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Confirm Booking"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
+

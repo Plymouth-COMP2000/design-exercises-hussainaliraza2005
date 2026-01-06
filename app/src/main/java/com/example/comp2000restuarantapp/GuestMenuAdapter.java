@@ -38,17 +38,23 @@ public class GuestMenuAdapter extends RecyclerView.Adapter<GuestMenuAdapter.Gues
     @Override
     public void onBindViewHolder(@NonNull GuestMenuViewHolder holder, int position) {
         MenuItem currentItem = menuList.get(position);
+
         holder.tvItemName.setText(currentItem.getName());
         holder.tvItemPrice.setText(String.format(Locale.getDefault(), "£%.2f", currentItem.getPrice()));
-
+        
+        // Show description or a placeholder if empty
         String desc = currentItem.getDescription();
         if (desc == null || desc.isEmpty()) {
             desc = "No description available.";
         }
         holder.tvItemDescription.setText(desc);
-        holder.itemView.setOnClickListener(v ->
-                Toast.makeText(context, currentItem.getName(), Toast.LENGTH_SHORT).show()
-        );
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(context, currentItem.getName() + ": " + currentItem.getDescription(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -57,7 +63,9 @@ public class GuestMenuAdapter extends RecyclerView.Adapter<GuestMenuAdapter.Gues
     }
 
     public static class GuestMenuViewHolder extends RecyclerView.ViewHolder {
-        public TextView tvItemName, tvItemPrice, tvItemDescription;
+        public TextView tvItemName;
+        public TextView tvItemPrice;
+        public TextView tvItemDescription;
 
         public GuestMenuViewHolder(@NonNull View itemView) {
             super(itemView);

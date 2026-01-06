@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.comp2000restuarantapp"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -35,7 +35,8 @@ android {
 
 dependencies {
     implementation(libs.appcompat)
-    implementation("com.google.android.material:material:1.13.0")
+    implementation("com.google.android.material:material:1.9.0")
+    implementation("com.android.volley:volley:1.2.1")
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)

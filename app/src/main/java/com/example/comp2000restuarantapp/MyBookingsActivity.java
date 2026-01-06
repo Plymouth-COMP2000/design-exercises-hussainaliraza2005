@@ -1,77 +1,111 @@
 package com.example.comp2000restuarantapp;
-import android.content.Intent; import android.content.SharedPreferences; import android.os.Bundle; import android.view.View; import android.widget.TextView; import android.widget.Toast; import androidx.appcompat.app.AppCompatActivity; import androidx.recyclerview.widget.LinearLayoutManager; import androidx.recyclerview.widget.RecyclerView; import com.google.android.material.bottomnavigation.BottomNavigationView; import java.util.ArrayList; import java.util.List;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
+
+import java.util.List;
 
 public class MyBookingsActivity extends AppCompatActivity {
 
-private RecyclerView rvBookings;
-private ReservationAdapter adapter;
-private Repository repository;
-private TextView tvEmpty;
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.d_my_bookings);
-    repository = new Repository(this);
-    rvBookings = findViewById(R.id.rv_bookings);
-    tvEmpty = findViewById(R.id.tvEmpty);
-    rvBookings.setLayoutManager(new LinearLayoutManager(this));
-    findViewById(R.id.btn_new_booking).setOnClickListener(v -> 
-        startActivity(new Intent(MyBookingsActivity.this, BookTableActivity.class))
-    );
-    setupBottomNavigation();
-}
-private void loadBookings() {
-    SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
-    String currentUser = prefs.getString("USER_EMAIL", "");
-    List<Reservation> allReservations = repository.getLocalReservations();
-    List<Reservation> myReservations = new ArrayList<>();
-    // Filter: Only show bookings for this user
-    for (Reservation r : allReservations) {
-        if (r.getGuestName().equalsIgnoreCase(currentUser)) {
-            myReservations.add(r);
-        }
+    private RecyclerView rvBookings;
+    private ReservationAdapter adapter;
+    private Repository repository;
+    private List<Reservation> reservationList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.d_bookings);
+
+        repository = new Repository(this);
+        rvBookings = findViewById(R.id.rv_bookings_list);
+        rvBookings.setLayoutManager(new LinearLayoutManager(this));
+
+        Button btnBookTable = findViewById(R.id.btn_book_new_table);
+        btnBookTable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MyBookingsActivity.this, BookTableActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        loadData();
+
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setSelectedItemId(R.id.nav_bookings);
+
+        bottomNav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+                if (itemId == R.id.nav_menu) {
+                    Intent intent = new Intent(MyBookingsActivity.this, GuestMenuActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                    overridePendingTransition(0, 0); // No animation
+                    return true;
+                } else if (itemId == R.id.nav_bookings) {
+                    return true;
+                } else if (itemId == R.id.nav_profile) {
+                    Intent intent = new Intent(MyBookingsActivity.this, GuestProfileActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                    overridePendingTransition(0, 0); // No animation
+                    return true;
+                }
+                return false;
+            }
+        });
     }
-    if (myReservations.isEmpty()) {
-        tvEmpty.setVisibility(View.VISIBLE);
-        rvBookings.setVisibility(View.GONE);
-    } else {
-        tvEmpty.setVisibility(View.GONE);
-        rvBookings.setVisibility(View.VISIBLE);
+
+    private void loadData() {
+        reservationList = repository.getLocalReservations();
+        adapter = new ReservationAdapter(this, reservationList);
+
+        adapter.setOnItemClickListener(new ReservationAdapter.OnItemClickListener() {
+            @Override
+            public void onCancelClick(int position) {
+                Reservation reservation = reservationList.get(position);
+                boolean deleted = repository.deleteLocalReservation(reservation.getId());
+                
+                if (deleted) {
+                    Toast.makeText(MyBookingsActivity.this, "Booking Cancelled", Toast.LENGTH_SHORT).show();
+                    loadData(); // Refresh list
+                } else {
+                    Toast.makeText(MyBookingsActivity.this, "Error cancelling booking", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onViewDetailsClick(int position) {
+                Reservation reservation = reservationList.get(position);
+                String details = "Time: " + reservation.getTime() + "\n" +
+                                 "Table: " + reservation.getTableNumber();
+                Toast.makeText(MyBookingsActivity.this, details, Toast.LENGTH_LONG).show();
+            }
+        });
+
+        rvBookings.setAdapter(adapter);
     }
-    adapter = new ReservationAdapter(this, myReservations);
-    adapter.setOnItemClickListener(position -> {
-        Reservation res = myReservations.get(position);
-        if (repository.deleteLocalReservation(res.getId())) {
-            Toast.makeText(this, "Booking Cancelled", Toast.LENGTH_SHORT).show();
-            loadBookings(); // Refresh
-        }
-    });
-    rvBookings.setAdapter(adapter);
-}
-private void setupBottomNavigation() {
-    BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-    bottomNav.setSelectedItemId(R.id.nav_bookings);
-    bottomNav.setOnItemSelectedListener(item -> {
-        int id = item.getItemId();
-        if (id == R.id.nav_bookings) return true;
-        if (id == R.id.nav_menu) {
-            startActivity(new Intent(this, GuestMenuActivity.class));
-            overridePendingTransition(0,0);
-            return true;
-        }
-        if (id == R.id.nav_profile) {
-            startActivity(new Intent(this, GuestProfileActivity.class));
-            overridePendingTransition(0,0);
-            return true;
-        }
-        return false;
-    });
-}
-@Override
-protected void onResume() {
-    super.onResume();
-    loadBookings();
-    BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-    bottomNav.setSelectedItemId(R.id.nav_bookings);
-}
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadData();
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setSelectedItemId(R.id.nav_bookings);
+    }
 }

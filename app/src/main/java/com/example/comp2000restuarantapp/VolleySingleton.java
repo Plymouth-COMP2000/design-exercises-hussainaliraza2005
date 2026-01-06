@@ -5,10 +5,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
-/**
- * Singleton class for managing the Volley RequestQueue.
- * Ensures only one instance of the network queue exists for the app's lifecycle.
- */
 public class VolleySingleton {
     private static VolleySingleton instance;
     private RequestQueue requestQueue;
@@ -19,9 +15,6 @@ public class VolleySingleton {
         requestQueue = getRequestQueue();
     }
 
-    /**
-     * Returns the synchronized instance of VolleySingleton.
-     */
     public static synchronized VolleySingleton getInstance(Context context) {
         if (instance == null) {
             instance = new VolleySingleton(context);
@@ -31,7 +24,8 @@ public class VolleySingleton {
 
     public RequestQueue getRequestQueue() {
         if (requestQueue == null) {
-            // usage of getApplicationContext() prevents memory leaks
+            // getApplicationContext() is key, it keeps you from leaking the
+            // Activity or BroadcastReceiver if someone passes one in.
             requestQueue = Volley.newRequestQueue(ctx.getApplicationContext());
         }
         return requestQueue;

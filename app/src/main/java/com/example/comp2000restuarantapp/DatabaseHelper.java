@@ -5,24 +5,23 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Handles all SQLite database operations including creation, upgrades,
- * and CRUD operations for Menu Items and Reservations.
- */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "restaurant.db";
     private static final int DATABASE_VERSION = 1;
-    // --- Table: Menu ---
+
+    // Menu Table
     public static final String TABLE_MENU = "menu";
     public static final String COL_MENU_ID = "id";
     public static final String COL_MENU_NAME = "name";
     public static final String COL_MENU_PRICE = "price";
     public static final String COL_MENU_DESC = "description";
-    // --- Table: Reservations ---
+
+    // Reservations Table
     public static final String TABLE_RESERVATIONS = "reservations";
     public static final String COL_RES_ID = "id";
     public static final String COL_RES_GUEST = "guest_name";
@@ -40,11 +39,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_MENU_NAME + " TEXT, " +
                 COL_MENU_PRICE + " REAL, " +
                 COL_MENU_DESC + " TEXT)";
+
         String createReservationsTable = "CREATE TABLE " + TABLE_RESERVATIONS + " (" +
                 COL_RES_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_RES_GUEST + " TEXT, " +
                 COL_RES_TIME + " TEXT, " +
                 COL_RES_TABLE + " TEXT)";
+
         db.execSQL(createMenuTable);
         db.execSQL(createReservationsTable);
     }
@@ -57,12 +58,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // --- Menu Methods ---
+
     public boolean addMenuItem(MenuItem item) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_MENU_NAME, item.getName());
         values.put(COL_MENU_PRICE, item.getPrice());
         values.put(COL_MENU_DESC, item.getDescription());
+
         long result = db.insert(TABLE_MENU, null, values);
         return result != -1;
     }
@@ -71,6 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<MenuItem> menuList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_MENU, null);
+
         if (cursor.moveToFirst()) {
             do {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_MENU_ID));
@@ -90,6 +94,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_MENU_NAME, item.getName());
         values.put(COL_MENU_PRICE, item.getPrice());
         values.put(COL_MENU_DESC, item.getDescription());
+
         int rows = db.update(TABLE_MENU, values, COL_MENU_ID + "=?", new String[]{String.valueOf(item.getId())});
         return rows > 0;
     }
@@ -101,12 +106,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // --- Reservation Methods ---
+
     public boolean addReservation(Reservation reservation) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_RES_GUEST, reservation.getGuestName());
         values.put(COL_RES_TIME, reservation.getTime());
         values.put(COL_RES_TABLE, reservation.getTableNumber());
+
         long result = db.insert(TABLE_RESERVATIONS, null, values);
         return result != -1;
     }
@@ -115,6 +122,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         List<Reservation> reservationList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_RESERVATIONS, null);
+
         if (cursor.moveToFirst()) {
             do {
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow(COL_RES_ID));

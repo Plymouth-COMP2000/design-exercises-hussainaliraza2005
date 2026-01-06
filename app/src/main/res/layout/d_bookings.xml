@@ -61,3 +61,4 @@
         app:menu="@menu/menu_bookings_selected" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
