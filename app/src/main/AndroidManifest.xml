@@ -34,6 +34,8 @@
         <activity android:name=".GuestLoginActivity" android:exported="false" />
         <activity android:name=".StaffLoginActivity" android:exported="false" />
         <activity android:name=".GuestMenuActivity" android:exported="false" />
+        <activity android:name=".GuestRegisterActivity" android:exported="false" />
+        <activity android:name=".GuestForgotPasswordActivity" android:exported="false" />
         <activity android:name=".MyBookingsActivity" android:exported="false" />
         <activity android:name=".BookTableActivity" android:exported="false" />
         <activity android:name=".GuestProfileActivity" android:exported="false" />

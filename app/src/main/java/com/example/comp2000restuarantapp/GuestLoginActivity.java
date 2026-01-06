@@ -14,6 +14,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class GuestLoginActivity extends AppCompatActivity {
 
+    private static final String PREFS_NAME = "RestaurantAppPrefs";
+    private static final String KEY_USER_EMAIL = "USER_EMAIL";
+    private static final String KEY_USER_PASSWORD = "USER_PASSWORD";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,8 +27,14 @@ public class GuestLoginActivity extends AppCompatActivity {
         EditText etPassword = findViewById(R.id.et_password);
         Button btnLogin = findViewById(R.id.btn_login);
         TextView tvRegister = findViewById(R.id.tv_register_link);
+        TextView tvForgotPassword = findViewById(R.id.tv_forgot_password_link);
         ImageButton btnBack = findViewById(R.id.btn_back_to_role);
         TextView tvBack = findViewById(R.id.tv_back_to_role);
+
+        String prefillEmail = getIntent().getStringExtra("EMAIL_PREFILL");
+        if (prefillEmail != null) {
+            etEmail.setText(prefillEmail);
+        }
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -37,10 +47,25 @@ public class GuestLoginActivity extends AppCompatActivity {
                     return;
                 }
 
+                SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                String storedEmail = prefs.getString(KEY_USER_EMAIL, null);
+                String storedPassword = prefs.getString(KEY_USER_PASSWORD, null);
+                if (storedEmail == null || storedPassword == null) {
+                    Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (storedEmail != null && storedPassword != null) {
+                    boolean emailMatches = storedEmail.equalsIgnoreCase(email);
+                    boolean passwordMatches = storedPassword.equals(password);
+                    if (!emailMatches || !passwordMatches) {
+                        Toast.makeText(GuestLoginActivity.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+
                 // Save email to SharedPreferences
-                SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("USER_EMAIL", email);
+                editor.putString(KEY_USER_EMAIL, email);
                 editor.apply();
 
                 Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
@@ -52,7 +77,16 @@ public class GuestLoginActivity extends AppCompatActivity {
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(GuestLoginActivity.this, "Registration coming soon", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(GuestLoginActivity.this, GuestRegisterActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        tvForgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GuestLoginActivity.this, GuestForgotPasswordActivity.class);
+                startActivity(intent);
             }
         });
 
