@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "restaurant.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2; // Incremented version
 
     // Menu Table
     public static final String TABLE_MENU = "menu";
@@ -27,6 +27,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_RES_GUEST = "guest_name";
     public static final String COL_RES_TIME = "time";
     public static final String COL_RES_TABLE = "table_number";
+
+    // Users Table
+    public static final String TABLE_USERS = "users";
+    public static final String COL_USER_ID = "id";
+    public static final String COL_USER_EMAIL = "email";
+    public static final String COL_USER_PASSWORD = "password";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -46,15 +52,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_RES_TIME + " TEXT, " +
                 COL_RES_TABLE + " TEXT)";
 
+        String createUsersTable = "CREATE TABLE " + TABLE_USERS + " (" +
+                COL_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_USER_EMAIL + " TEXT UNIQUE, " +
+                COL_USER_PASSWORD + " TEXT)";
+
         db.execSQL(createMenuTable);
         db.execSQL(createReservationsTable);
+        db.execSQL(createUsersTable);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MENU);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_RESERVATIONS);
-        onCreate(db);
+        if (oldVersion < 2) {
+             String createUsersTable = "CREATE TABLE " + TABLE_USERS + " (" +
+                COL_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_USER_EMAIL + " TEXT UNIQUE, " +
+                COL_USER_PASSWORD + " TEXT)";
+             db.execSQL(createUsersTable);
+        }
     }
 
     // --- Menu Methods ---
@@ -140,5 +156,48 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         int rowsAffected = db.delete(TABLE_RESERVATIONS, COL_RES_ID + "=?", new String[]{String.valueOf(id)});
         return rowsAffected > 0;
+    }
+
+    // --- User Methods ---
+
+    public boolean registerUser(String email, String password) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_USER_EMAIL, email);
+        values.put(COL_USER_PASSWORD, password);
+
+        long result = db.insert(TABLE_USERS, null, values);
+        return result != -1;
+    }
+
+    public boolean checkUser(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = { COL_USER_ID };
+        String selection = COL_USER_EMAIL + " = ? AND " + COL_USER_PASSWORD + " = ?";
+        String[] selectionArgs = { email, password };
+        Cursor cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        return count > 0;
+    }
+    
+    public boolean checkUserExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = { COL_USER_ID };
+        String selection = COL_USER_EMAIL + " = ?";
+        String[] selectionArgs = { email };
+        Cursor cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+        int count = cursor.getCount();
+        cursor.close();
+        return count > 0;
+    }
+
+    public boolean updateUserPassword(String email, String newPassword) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_USER_PASSWORD, newPassword);
+
+        int rows = db.update(TABLE_USERS, values, COL_USER_EMAIL + "=?", new String[]{email});
+        return rows > 0;
     }
 }

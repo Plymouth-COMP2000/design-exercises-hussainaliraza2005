@@ -75,6 +75,24 @@ public class Repository {
         return dbHelper.deleteReservation(id);
     }
 
+    // --- User Methods ---
+    
+    public boolean registerUser(String email, String password) {
+        return dbHelper.registerUser(email, password);
+    }
+
+    public boolean checkUser(String email, String password) {
+        return dbHelper.checkUser(email, password);
+    }
+
+    public boolean checkUserExists(String email) {
+        return dbHelper.checkUserExists(email);
+    }
+
+    public boolean updateUserPassword(String email, String newPassword) {
+        return dbHelper.updateUserPassword(email, newPassword);
+    }
+
     // Callback interface for async operations
     public interface DataCallback<T> {
         void onSuccess(T data);

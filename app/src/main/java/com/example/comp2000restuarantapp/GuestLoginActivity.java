@@ -1,7 +1,6 @@
 package com.example.comp2000restuarantapp;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -14,17 +13,29 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class GuestLoginActivity extends AppCompatActivity {
 
+    private EditText etEmail;
+    private Repository repository;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.b_guest_login);
 
-        EditText etEmail = findViewById(R.id.et_email);
+        repository = new Repository(this);
+
+        etEmail = findViewById(R.id.et_email);
         EditText etPassword = findViewById(R.id.et_password);
         Button btnLogin = findViewById(R.id.btn_login);
         TextView tvRegister = findViewById(R.id.tv_register_link);
+        TextView tvForgotPassword = findViewById(R.id.tv_forgot_password_link);
         ImageButton btnBack = findViewById(R.id.btn_back_to_role);
         TextView tvBack = findViewById(R.id.tv_back_to_role);
+
+        // Check for prefill email from registration or password reset
+        if (getIntent().hasExtra("EMAIL_PREFILL")) {
+            String emailPrefill = getIntent().getStringExtra("EMAIL_PREFILL");
+            etEmail.setText(emailPrefill);
+        }
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -37,22 +48,44 @@ public class GuestLoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                // Save email to SharedPreferences
-                SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("USER_EMAIL", email);
-                editor.apply();
+                // Check DB for credentials
+                if (repository.checkUser(email.toLowerCase(), password)) {
+                    // Save session email to SharedPreferences so the app knows who is logged in
+                    // We can reuse the same key or a session-specific key. 
+                    // Keeping "USER_EMAIL" as the "current logged in user" key for simplicity, 
+                    // although now it's just a session token rather than the only storage.
+                    getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putString("USER_EMAIL", email.toLowerCase())
+                            .apply();
 
-                Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
-                startActivity(intent);
-                finish();
+                    Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else {
+                     // Check if user exists at all to give better feedback
+                     if (!repository.checkUserExists(email.toLowerCase())) {
+                         Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
+                     } else {
+                         Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                     }
+                }
             }
         });
 
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(GuestLoginActivity.this, "Registration coming soon", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(GuestLoginActivity.this, GuestRegisterActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        tvForgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GuestLoginActivity.this, GuestForgotPasswordActivity.class);
+                startActivity(intent);
             }
         });
 
