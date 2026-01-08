@@ -25,7 +25,7 @@ import java.util.Map;
 public class CourseworkApi {
 
     private static final String BASE_URL = "http://10.240.72.69/comp2000/coursework/";
-    private static final String STUDENT_ID = "REPLACE_WITH_MY_STUDENT_ID"; // TODO: Update with actual Student ID
+    private static final String STUDENT_ID = "10929632";
 
     private VolleySingleton volley;
 
@@ -42,13 +42,16 @@ public class CourseworkApi {
     public void createStudentDatabase(final ApiCallback<String> cb) {
         String url = BASE_URL + "create_student/" + STUDENT_ID;
 
-        // Using POST with empty body
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        // Assuming success if we get a JSON response
-                        cb.onSuccess("Student database created successfully.");
+                        try {
+                            String message = response.has("message") ? response.getString("message") : "Success";
+                            cb.onSuccess(message);
+                        } catch (JSONException e) {
+                             cb.onSuccess("Student database action completed.");
+                        }
                     }
                 },
                 new Response.ErrorListener() {
@@ -97,7 +100,6 @@ public class CourseworkApi {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            // Week 8 spec often wraps the list in a "users" array
                             List<User> userList = new ArrayList<>();
                             if (response.has("users")) {
                                 JSONArray array = response.getJSONArray("users");
@@ -105,9 +107,6 @@ public class CourseworkApi {
                                     User u = jsonToUser(array.getJSONObject(i));
                                     userList.add(u);
                                 }
-                            } else {
-                                // Fallback parsing logic if the response structure is different
-                                // e.g. if root is just an object representing one user or flat (unlikely for read_all)
                             }
                             cb.onSuccess(userList);
                         } catch (JSONException e) {
@@ -168,15 +167,9 @@ public class CourseworkApi {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            // Depending on API, response might be the updated user
-                            // or a success message. We try to parse the user.
                             User u = jsonToUser(response);
                             cb.onSuccess(u);
                         } catch (JSONException e) {
-                            // If parsing fails, maybe it returned just a message?
-                            // We can still trigger success, possibly passing the original user object
-                            // back or null, but the signature expects User.
-                            // Let's assume we can re-use 'user' if parsing fails but request succeeded.
                             cb.onSuccess(user);
                         }
                     }
@@ -242,14 +235,8 @@ public class CourseworkApi {
     }
 
     private User jsonToUser(JSONObject json) throws JSONException {
-        // Handle case where API returns {"user": { ... }}
-        JSONObject userJson = json;
-        if (json.has("user")) {
-            userJson = json.getJSONObject("user");
-        }
-
+        JSONObject userJson = json.has("user") ? json.getJSONObject("user") : json;
         User user = new User();
-        // Use optString to avoid crashes on missing keys, or getString to be strict
         user.setUsername(userJson.optString("username", ""));
         user.setPassword(userJson.optString("password", ""));
         user.setFirstname(userJson.optString("firstname", ""));
@@ -264,7 +251,8 @@ public class CourseworkApi {
         if (error == null) return "Unknown error";
         NetworkResponse response = error.networkResponse;
         if (response != null) {
-            return "Error Status: " + response.statusCode;
+            String responseBody = new String(response.data, StandardCharsets.UTF_8);
+            return "Status: " + response.statusCode + ", Body: " + responseBody;
         }
         return error.getMessage() != null ? error.getMessage() : "Network error occurred";
     }
