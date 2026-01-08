@@ -4,12 +4,9 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,89 +36,62 @@ public class BookTableActivity extends AppCompatActivity {
         TextView tvBack = findViewById(R.id.tv_back_to_bookings);
 
         // Date Picker
-        etDate.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Calendar c = Calendar.getInstance();
-                int year = c.get(Calendar.YEAR);
-                int month = c.get(Calendar.MONTH);
-                int day = c.get(Calendar.DAY_OF_MONTH);
+        etDate.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
 
-                DatePickerDialog datePickerDialog = new DatePickerDialog(BookTableActivity.this,
-                        new DatePickerDialog.OnDateSetListener() {
-                            @Override
-                            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                                etDate.setText(String.format(Locale.getDefault(), "%d-%02d-%02d", year, month + 1, dayOfMonth));
-                            }
-                        }, year, month, day);
-                
-                // Set minimum date to today
-                datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
-                
-                datePickerDialog.show();
-            }
+            DatePickerDialog datePickerDialog = new DatePickerDialog(BookTableActivity.this,
+                    (view, year1, month1, dayOfMonth) -> etDate.setText(String.format(Locale.getDefault(), "%d-%02d-%02d", year1, month1 + 1, dayOfMonth)), year, month, day);
+            
+            datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+            datePickerDialog.show();
         });
 
         // Time Picker
-        etTime.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Calendar c = Calendar.getInstance();
-                int hour = c.get(Calendar.HOUR_OF_DAY);
-                int minute = c.get(Calendar.MINUTE);
+        etTime.setOnClickListener(v -> {
+            Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
 
-                TimePickerDialog timePickerDialog = new TimePickerDialog(BookTableActivity.this,
-                        new TimePickerDialog.OnTimeSetListener() {
-                            @Override
-                            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                                etTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute));
-                            }
-                        }, hour, minute, true);
-                timePickerDialog.show();
-            }
+            TimePickerDialog timePickerDialog = new TimePickerDialog(BookTableActivity.this,
+                    (view, hourOfDay, minute1) -> etTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute1)), hour, minute, true);
+            timePickerDialog.show();
         });
 
-        btnConfirm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String date = etDate.getText().toString();
-                String time = etTime.getText().toString();
-                String guestsStr = etGuests.getText().toString();
+        btnConfirm.setOnClickListener(v -> {
+            String date = etDate.getText().toString();
+            String time = etTime.getText().toString();
+            String guestsStr = etGuests.getText().toString();
 
-                if (date.isEmpty() || time.isEmpty() || guestsStr.isEmpty()) {
-                    Toast.makeText(BookTableActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            if (date.isEmpty() || time.isEmpty() || guestsStr.isEmpty()) {
+                Toast.makeText(BookTableActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                // Retrieve user email from SharedPreferences
-                SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
-                String userEmail = prefs.getString("USER_EMAIL", "Guest");
+            SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
+            String userEmail = prefs.getString("USER_EMAIL", "Guest");
 
-                String dateTime = date + " " + time;
-                Reservation reservation = new Reservation(userEmail, dateTime, "Table 1 (for " + guestsStr + ")");
+            String dateTime = date + " " + time;
+            Reservation reservation = new Reservation(userEmail, dateTime, "Table for " + guestsStr);
+            
+            boolean success = repository.addLocalReservation(reservation);
+            if (success) {
+                Toast.makeText(BookTableActivity.this, "Booking Confirmed!", Toast.LENGTH_SHORT).show();
                 
-                boolean success = repository.addLocalReservation(reservation);
-                if (success) {
-                    Toast.makeText(BookTableActivity.this, "Booking Confirmed!", Toast.LENGTH_SHORT).show();
-                    
-                    // Trigger notification
-                    NotificationHelper.show(BookTableActivity.this, "Booking Confirmed", 
-                            "Your table for " + guestsStr + " guests at " + time + " on " + date + " is reserved.", 1001);
+                // TRIGGER NOTIFICATION
+                NotificationHelper.show(BookTableActivity.this, "Booking Confirmed", 
+                        "Your table for " + guestsStr + " at " + time + " on " + date + " is reserved.", 
+                        (int) System.currentTimeMillis()); // Unique ID for notification
 
-                    finish();
-                } else {
-                    Toast.makeText(BookTableActivity.this, "Error making booking", Toast.LENGTH_SHORT).show();
-                }
+                finish();
+            } else {
+                Toast.makeText(BookTableActivity.this, "Error making booking", Toast.LENGTH_SHORT).show();
             }
         });
 
-        View.OnClickListener backListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        };
-        btnBack.setOnClickListener(backListener);
-        tvBack.setOnClickListener(backListener);
+        btnBack.setOnClickListener(v -> finish());
+        tvBack.setOnClickListener(v -> finish());
     }
 }
