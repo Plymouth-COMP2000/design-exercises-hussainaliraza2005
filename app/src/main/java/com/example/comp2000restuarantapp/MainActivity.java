@@ -70,13 +70,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeStudentDatabase() {
         SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
-        prefs.edit()
-                .remove("USER_EMAIL")   // or whatever key you use for logged-in identity
-                .apply();
 
-        boolean isInitialized = prefs.getBoolean("API_DB_INITIALISED", false);
-
-        if (isInitialized) {
+        boolean isInitialised = prefs.getBoolean("API_DB_INITIALISED", false);
+        if (isInitialised) {
             Log.d("MainActivity", "API DB already initialised");
             return;
         }
@@ -92,11 +88,17 @@ public class MainActivity extends AppCompatActivity {
             public void onError(CourseworkApi.ApiError error) {
                 int code = (error != null) ? error.getStatusCode() : -1;
                 String msg = (error != null && error.getMessage() != null) ? error.getMessage() : "Unknown error";
-                Log.e("MainActivity", "API init failed (" + code + "): " + msg);
 
-                // Do NOT set the flag on failure; allow retry next launch.
+                // Server returns 400 when the DB already exists — treat as success.
+                if (code == 400 && msg.toLowerCase().contains("already exists")) {
+                    prefs.edit().putBoolean("API_DB_INITIALISED", true).apply();
+                    Log.d("MainActivity", "API DB already exists; marking initialised.");
+                    return;
+                }
+
+                Log.e("MainActivity", "API init failed (" + code + "): " + msg);
                 Toast.makeText(MainActivity.this, "API init failed (" + code + ")", Toast.LENGTH_SHORT).show();
             }
         });
     }
-}
+
