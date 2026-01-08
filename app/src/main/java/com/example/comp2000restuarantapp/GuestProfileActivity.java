@@ -1,28 +1,40 @@
 package com.example.comp2000restuarantapp;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.navigation.NavigationBarView;
 
 public class GuestProfileActivity extends AppCompatActivity {
+
+    private SharedPreferences prefs;
+    private MaterialSwitch switchNotifications;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.f_profile);
 
-        SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
+        prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
         String userEmail = prefs.getString("USER_EMAIL", "Guest");
 
         TextView tvUserEmail = findViewById(R.id.tv_user_email);
@@ -30,12 +42,59 @@ public class GuestProfileActivity extends AppCompatActivity {
             tvUserEmail.setText("User: " + userEmail);
         }
 
+        // Initialize Permission Launcher for Android 13+
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                // Permission granted, keep switch ON and save preference
+                prefs.edit().putBoolean("NOTIFICATIONS_ENABLED", true).apply();
+                Toast.makeText(this, "Notifications enabled", Toast.LENGTH_SHORT).show();
+            } else {
+                // Permission denied, turn switch OFF
+                switchNotifications.setChecked(false);
+                prefs.edit().putBoolean("NOTIFICATIONS_ENABLED", false).apply();
+                Toast.makeText(this, "Permission denied. Notifications disabled.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Setup Notification Switch
+        View viewSwitch = findViewById(R.id.switch_notifications);
+        if (viewSwitch instanceof MaterialSwitch) {
+            switchNotifications = (MaterialSwitch) viewSwitch;
+            
+            // Set initial state
+            boolean isEnabled = prefs.getBoolean("NOTIFICATIONS_ENABLED", false);
+            switchNotifications.setChecked(isEnabled);
+
+            switchNotifications.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        // User turned ON
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(GuestProfileActivity.this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                // Permission already granted
+                                prefs.edit().putBoolean("NOTIFICATIONS_ENABLED", true).apply();
+                            } else {
+                                // Request permission
+                                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                            }
+                        } else {
+                            // Pre-Android 13, no runtime permission needed
+                            prefs.edit().putBoolean("NOTIFICATIONS_ENABLED", true).apply();
+                        }
+                    } else {
+                        // User turned OFF
+                        prefs.edit().putBoolean("NOTIFICATIONS_ENABLED", false).apply();
+                    }
+                }
+            });
+        }
+
         Button btnLogout = findViewById(R.id.btn_logout);
         if (btnLogout != null) {
             btnLogout.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Clear SharedPreferences
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.clear();
                     editor.apply();
@@ -44,18 +103,6 @@ public class GuestProfileActivity extends AppCompatActivity {
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();
-                }
-            });
-        }
-        
-        // Handle other buttons if they exist in the layout, e.g. manage notifications
-        // Note: The switch is named switch_notifications in XML, not btn_notifications
-        View switchNotifications = findViewById(R.id.switch_notifications);
-        if (switchNotifications != null) {
-            switchNotifications.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(GuestProfileActivity.this, "Notifications settings coming soon", Toast.LENGTH_SHORT).show();
                 }
             });
         }

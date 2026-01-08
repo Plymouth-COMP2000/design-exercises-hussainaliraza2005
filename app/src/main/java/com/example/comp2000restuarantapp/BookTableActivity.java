@@ -103,6 +103,11 @@ public class BookTableActivity extends AppCompatActivity {
                 boolean success = repository.addLocalReservation(reservation);
                 if (success) {
                     Toast.makeText(BookTableActivity.this, "Booking Confirmed!", Toast.LENGTH_SHORT).show();
+                    
+                    // Trigger notification
+                    NotificationHelper.show(BookTableActivity.this, "Booking Confirmed", 
+                            "Your table for " + guestsStr + " guests at " + time + " on " + date + " is reserved.", 1001);
+
                     finish();
                 } else {
                     Toast.makeText(BookTableActivity.this, "Error making booking", Toast.LENGTH_SHORT).show();

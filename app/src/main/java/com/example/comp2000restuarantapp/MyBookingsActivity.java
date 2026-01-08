@@ -83,6 +83,11 @@ public class MyBookingsActivity extends AppCompatActivity {
                 
                 if (deleted) {
                     Toast.makeText(MyBookingsActivity.this, "Booking Cancelled", Toast.LENGTH_SHORT).show();
+                    
+                    // Trigger notification
+                    NotificationHelper.show(MyBookingsActivity.this, "Booking Cancelled", 
+                            "Your reservation for " + reservation.getTime() + " has been cancelled.", 1002);
+
                     loadData(); // Refresh list
                 } else {
                     Toast.makeText(MyBookingsActivity.this, "Error cancelling booking", Toast.LENGTH_SHORT).show();
