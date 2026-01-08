@@ -62,13 +62,30 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_register_contact"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Contact Number"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        app:layout_constraintTop_toBottomOf="@id/til_register_email"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_register_contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="phone"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_register_password"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Password"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         app:passwordToggleEnabled="true"
-        app:layout_constraintTop_toBottomOf="@id/til_register_email"
+        app:layout_constraintTop_toBottomOf="@id/til_register_contact"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp">
