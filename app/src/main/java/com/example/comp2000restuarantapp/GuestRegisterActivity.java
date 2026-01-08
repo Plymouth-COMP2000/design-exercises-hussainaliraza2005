@@ -27,6 +27,7 @@ public class GuestRegisterActivity extends AppCompatActivity {
         courseworkApi = new CourseworkApi(this);
 
         TextInputEditText etEmail = findViewById(R.id.et_register_email);
+        TextInputEditText etContact = findViewById(R.id.et_register_contact);
         TextInputEditText etPassword = findViewById(R.id.et_register_password);
         TextInputEditText etConfirmPassword = findViewById(R.id.et_register_confirm_password);
         Button btnRegister = findViewById(R.id.btn_register);
@@ -35,10 +36,11 @@ public class GuestRegisterActivity extends AppCompatActivity {
 
         btnRegister.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
+            String contact = etContact.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
             String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-            if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || contact.isEmpty()) {
                 Toast.makeText(GuestRegisterActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -60,7 +62,7 @@ public class GuestRegisterActivity extends AppCompatActivity {
             newUser.setPassword(password);
             newUser.setFirstname("Guest"); // Default value
             newUser.setLastname("User");   // Default value
-            newUser.setContact("");        // Default value
+            newUser.setContact(contact);   // User provided contact
             newUser.setUserType("Guest");  // Default value
 
             // 1. Call API to create the user remotely
