@@ -34,12 +34,9 @@ public class MyBookingsActivity extends AppCompatActivity {
         rvBookings.setLayoutManager(new LinearLayoutManager(this));
 
         Button btnBookTable = findViewById(R.id.btn_book_new_table);
-        btnBookTable.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MyBookingsActivity.this, BookTableActivity.class);
-                startActivity(intent);
-            }
+        btnBookTable.setOnClickListener(v -> {
+            Intent intent = new Intent(MyBookingsActivity.this, BookTableActivity.class);
+            startActivity(intent);
         });
 
         loadData();
@@ -47,27 +44,24 @@ public class MyBookingsActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_bookings);
 
-        bottomNav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int itemId = item.getItemId();
-                if (itemId == R.id.nav_menu) {
-                    Intent intent = new Intent(MyBookingsActivity.this, GuestMenuActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(intent);
-                    overridePendingTransition(0, 0); // No animation
-                    return true;
-                } else if (itemId == R.id.nav_bookings) {
-                    return true;
-                } else if (itemId == R.id.nav_profile) {
-                    Intent intent = new Intent(MyBookingsActivity.this, GuestProfileActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(intent);
-                    overridePendingTransition(0, 0); // No animation
-                    return true;
-                }
-                return false;
+        bottomNav.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_menu) {
+                Intent intent = new Intent(MyBookingsActivity.this, GuestMenuActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                overridePendingTransition(0, 0); // No animation
+                return true;
+            } else if (itemId == R.id.nav_bookings) {
+                return true;
+            } else if (itemId == R.id.nav_profile) {
+                Intent intent = new Intent(MyBookingsActivity.this, GuestProfileActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                overridePendingTransition(0, 0); // No animation
+                return true;
             }
+            return false;
         });
     }
 
@@ -84,10 +78,11 @@ public class MyBookingsActivity extends AppCompatActivity {
                 if (deleted) {
                     Toast.makeText(MyBookingsActivity.this, "Booking Cancelled", Toast.LENGTH_SHORT).show();
                     
-                    // Trigger notification
+                    // TRIGGER NOTIFICATION
                     NotificationHelper.show(MyBookingsActivity.this, "Booking Cancelled", 
-                            "Your reservation for " + reservation.getTime() + " has been cancelled.", 1002);
-
+                            "Your reservation for " + reservation.getTime() + " has been cancelled.",
+                            (int) System.currentTimeMillis()); // Unique ID
+                    
                     loadData(); // Refresh list
                 } else {
                     Toast.makeText(MyBookingsActivity.this, "Error cancelling booking", Toast.LENGTH_SHORT).show();
