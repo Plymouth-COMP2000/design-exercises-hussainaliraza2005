@@ -134,6 +134,7 @@ public class CourseworkApi {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            // The parsing logic is handled in the jsonToUser helper method
                             User u = jsonToUser(response);
                             cb.onSuccess(u);
                         } catch (JSONException e) {
@@ -235,7 +236,9 @@ public class CourseworkApi {
     }
 
     private User jsonToUser(JSONObject json) throws JSONException {
+        // Prefer parsing the nested "user" object if it exists.
         JSONObject userJson = json.has("user") ? json.getJSONObject("user") : json;
+        
         User user = new User();
         user.setUsername(userJson.optString("username", ""));
         user.setPassword(userJson.optString("password", ""));
