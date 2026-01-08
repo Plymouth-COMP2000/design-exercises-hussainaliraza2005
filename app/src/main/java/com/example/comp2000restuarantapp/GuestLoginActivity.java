@@ -1,7 +1,6 @@
 package com.example.comp2000restuarantapp;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -34,42 +33,39 @@ public class GuestLoginActivity extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btn_back_to_role);
         TextView tvBack = findViewById(R.id.tv_back_to_role);
 
-        // Check for prefill email from registration or password reset
         if (getIntent().hasExtra("EMAIL_PREFILL")) {
             etEmail.setText(getIntent().getStringExtra("EMAIL_PREFILL"));
         }
 
         btnLogin.setOnClickListener(v -> {
-            String inputEmailOrUsername = etEmail.getText().toString().trim();
+            String emailOrUsername = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
-            if (inputEmailOrUsername.isEmpty() || password.isEmpty()) {
-                Toast.makeText(GuestLoginActivity.this, "Please enter email/username and password", Toast.LENGTH_SHORT).show();
+            if (emailOrUsername.isEmpty() || password.isEmpty()) {
+                Toast.makeText(GuestLoginActivity.this, "Please enter email and password", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // 1. Attempt API Login first
-            courseworkApi.readUser(inputEmailOrUsername, new CourseworkApi.ApiCallback<User>() {
+            courseworkApi.readUser(emailOrUsername, new CourseworkApi.ApiCallback<User>() {
                 @Override
                 public void onSuccess(User apiUser) {
-                    // API call succeeded, check if passwords match
-                    if (apiUser != null && apiUser.getPassword() != null && apiUser.getPassword().equals(password)) {
-                        // Password correct - Valid API Login
-                        String emailToSave = (apiUser.getEmail() != null && !apiUser.getEmail().isEmpty()) 
-                                ? apiUser.getEmail() 
-                                : inputEmailOrUsername;
-                        proceedToDashboard(emailToSave);
+                    if (apiUser != null && password.equals(apiUser.getPassword())) {
+                        proceedToDashboard(apiUser.getEmail());
                     } else {
-                        // Password incorrect or user data malformed
                         Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                     }
                 }
 
                 @Override
-                public void onError(String message) {
-                    // API call failed (e.g., network error, or user not found 404)
-                    // Fallback to Local SQLite Login
-                    fallbackToLocalLogin(inputEmailOrUsername, password);
+                public void onError(CourseworkApi.ApiError error) {
+                    // If status code is 0, it's a network error (timeout, no connection)
+                    if (error.getStatusCode() == 0) {
+                        Toast.makeText(GuestLoginActivity.this, "Network unavailable, trying offline login...", Toast.LENGTH_SHORT).show();
+                        fallbackToLocalLogin(emailOrUsername, password);
+                    } else {
+                        // For any other error (404 Not Found, 400 Bad Request, etc.), show invalid credentials
+                        Toast.makeText(GuestLoginActivity.this, "Invalid credentials or account not found", Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         });
@@ -89,39 +85,27 @@ public class GuestLoginActivity extends AppCompatActivity {
         tvBack.setOnClickListener(backListener);
     }
 
-    /**
-     * Attempts to authenticate the user against the local SQLite database.
-     * This is used as a fallback if the remote API is unavailable.
-     */
     private void fallbackToLocalLogin(String email, String password) {
         String lowerEmail = email.toLowerCase();
-        
         if (repository.checkUser(lowerEmail, password)) {
-            // Local login success
             proceedToDashboard(lowerEmail);
         } else {
-            // Local login failed
             if (!repository.checkUserExists(lowerEmail)) {
-                Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
+                Toast.makeText(GuestLoginActivity.this, "No account found offline.", Toast.LENGTH_LONG).show();
             } else {
-                Toast.makeText(GuestLoginActivity.this, "Invalid credentials (local)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(GuestLoginActivity.this, "Invalid credentials (offline)", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    /**
-     * Handles successful login by saving session and navigating to the next screen.
-     */
     private void proceedToDashboard(String email) {
-        // Save session email to SharedPreferences
         getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE)
                 .edit()
                 .putString("USER_EMAIL", email)
                 .apply();
 
-        // Navigate to the main guest screen (Dashboard)
         Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
         startActivity(intent);
-        finish(); // Prevent user from pressing back to return to the login screen
+        finish();
     }
 }
