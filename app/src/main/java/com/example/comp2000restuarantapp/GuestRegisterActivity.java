@@ -16,6 +16,7 @@ import com.google.android.material.textfield.TextInputEditText;
 public class GuestRegisterActivity extends AppCompatActivity {
 
     private Repository repository;
+    private CourseworkApi courseworkApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,7 @@ public class GuestRegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_guest_register);
 
         repository = new Repository(this);
+        courseworkApi = new CourseworkApi(this);
 
         TextInputEditText etEmail = findViewById(R.id.et_register_email);
         TextInputEditText etPassword = findViewById(R.id.et_register_password);
@@ -53,27 +55,43 @@ public class GuestRegisterActivity extends AppCompatActivity {
                     return;
                 }
 
-                String lowerEmail = email.toLowerCase();
+                // Create User object for API
+                // Assuming username matches email for this flow, or you could split it
+                // Firstname/lastname/contact are empty for this simple flow, or you can add fields to UI
+                User newUser = new User();
+                newUser.setUsername(email); // Use email as username
+                newUser.setEmail(email);
+                newUser.setPassword(password);
+                newUser.setFirstname("Guest"); // Default
+                newUser.setLastname("User");   // Default
+                newUser.setContact("");
+                newUser.setUserType("Guest");
 
-                // Check if user already exists
-                if (repository.checkUserExists(lowerEmail)) {
-                    Toast.makeText(GuestRegisterActivity.this, "Email already registered", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                // Call API
+                courseworkApi.createUser(newUser, new CourseworkApi.ApiCallback<String>() {
+                    @Override
+                    public void onSuccess(String data) {
+                        // On success, we also save locally to SQLite as a cache/fallback
+                        String lowerEmail = email.toLowerCase();
+                        if (!repository.checkUserExists(lowerEmail)) {
+                            repository.registerUser(lowerEmail, password);
+                        }
 
-                boolean success = repository.registerUser(lowerEmail, password);
-                if (success) {
-                    Toast.makeText(GuestRegisterActivity.this, "Registration Successful!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(GuestRegisterActivity.this, "User created successfully!", Toast.LENGTH_SHORT).show();
 
-                    // Navigate back to Login with email prefill
-                    Intent intent = new Intent(GuestRegisterActivity.this, GuestLoginActivity.class);
-                    intent.putExtra("EMAIL_PREFILL", email);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
-                    finish();
-                } else {
-                    Toast.makeText(GuestRegisterActivity.this, "Registration Failed", Toast.LENGTH_SHORT).show();
-                }
+                        // Navigate back to Login
+                        Intent intent = new Intent(GuestRegisterActivity.this, GuestLoginActivity.class);
+                        intent.putExtra("EMAIL_PREFILL", email);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(intent);
+                        finish();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(GuestRegisterActivity.this, "Registration Error: " + message, Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
 
