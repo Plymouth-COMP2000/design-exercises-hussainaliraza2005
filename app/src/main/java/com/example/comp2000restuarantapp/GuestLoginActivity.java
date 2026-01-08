@@ -1,6 +1,7 @@
 package com.example.comp2000restuarantapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -15,6 +16,7 @@ public class GuestLoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
     private Repository repository;
+    private CourseworkApi courseworkApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +24,7 @@ public class GuestLoginActivity extends AppCompatActivity {
         setContentView(R.layout.b_guest_login);
 
         repository = new Repository(this);
+        courseworkApi = new CourseworkApi(this);
 
         etEmail = findViewById(R.id.et_email);
         EditText etPassword = findViewById(R.id.et_password);
@@ -40,36 +43,39 @@ public class GuestLoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = etEmail.getText().toString().trim();
+                String inputEmailOrUsername = etEmail.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
 
-                if (email.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(GuestLoginActivity.this, "Please enter email and password", Toast.LENGTH_SHORT).show();
+                if (inputEmailOrUsername.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(GuestLoginActivity.this, "Please enter email/username and password", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // Check DB for credentials
-                if (repository.checkUser(email.toLowerCase(), password)) {
-                    // Save session email to SharedPreferences so the app knows who is logged in
-                    // We can reuse the same key or a session-specific key. 
-                    // Keeping "USER_EMAIL" as the "current logged in user" key for simplicity, 
-                    // although now it's just a session token rather than the only storage.
-                    getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE)
-                            .edit()
-                            .putString("USER_EMAIL", email.toLowerCase())
-                            .apply();
+                // 1. Attempt API Login first
+                courseworkApi.readUser(inputEmailOrUsername, new CourseworkApi.ApiCallback<User>() {
+                    @Override
+                    public void onSuccess(User apiUser) {
+                        // API call succeeded (User found)
+                        // Check if passwords match
+                        if (apiUser != null && apiUser.getPassword() != null && apiUser.getPassword().equals(password)) {
+                            // Password correct - Valid API Login
+                            String emailToSave = (apiUser.getEmail() != null && !apiUser.getEmail().isEmpty()) 
+                                    ? apiUser.getEmail() 
+                                    : inputEmailOrUsername;
+                            proceedToDashboard(emailToSave);
+                        } else {
+                            // Password incorrect
+                            Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-                    Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
-                    startActivity(intent);
-                    finish();
-                } else {
-                     // Check if user exists at all to give better feedback
-                     if (!repository.checkUserExists(email.toLowerCase())) {
-                         Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
-                     } else {
-                         Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
-                     }
-                }
+                    @Override
+                    public void onError(String message) {
+                        // API call failed (Network error, or User not found 404)
+                        // Fallback to Local SQLite Login
+                        fallbackToLocalLogin(inputEmailOrUsername, password);
+                    }
+                });
             }
         });
 
@@ -98,5 +104,35 @@ public class GuestLoginActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(backListener);
         tvBack.setOnClickListener(backListener);
+    }
+
+    private void fallbackToLocalLogin(String email, String password) {
+        // Local DB uses lowercase emails for consistency
+        String lowerEmail = email.toLowerCase();
+        
+        if (repository.checkUser(lowerEmail, password)) {
+            // Local login success
+            proceedToDashboard(lowerEmail);
+        } else {
+            // Local login failed
+            if (!repository.checkUserExists(lowerEmail)) {
+                Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void proceedToDashboard(String email) {
+        // Save session email to SharedPreferences
+        getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE)
+                .edit()
+                .putString("USER_EMAIL", email)
+                .apply();
+
+        // Navigate to dashboard (GuestMenuActivity)
+        Intent intent = new Intent(GuestLoginActivity.this, GuestMenuActivity.class);
+        startActivity(intent);
+        finish();
     }
 }
