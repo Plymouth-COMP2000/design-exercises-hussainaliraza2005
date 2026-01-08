@@ -45,6 +45,26 @@
                 android:inputType="text"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Loading Indicator -->
+        <ProgressBar
+            android:id="@+id/pb_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Error/Status Message -->
+        <TextView
+            android:id="@+id/tv_status_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Loading..."
+            android:visibility="gone"
+            android:textColor="@color/md_theme_onSurfaceVariant"
+            android:layout_marginBottom="16dp"/>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_menu_items"
             android:layout_width="match_parent"
@@ -67,4 +87,3 @@
         app:menu="@menu/guest_bottom_nav_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

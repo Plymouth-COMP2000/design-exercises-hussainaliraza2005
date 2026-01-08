@@ -5,7 +5,10 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -24,7 +27,12 @@ public class GuestMenuActivity extends AppCompatActivity {
     private RecyclerView rvMenu;
     private GuestMenuAdapter adapter;
     private Repository repository;
+    private CourseworkApi courseworkApi;
     private List<com.example.comp2000restuarantapp.MenuItem> originalMenuList;
+
+    // Loading UI
+    private ProgressBar pbLoading;
+    private TextView tvStatusMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,10 +40,14 @@ public class GuestMenuActivity extends AppCompatActivity {
         setContentView(R.layout.c_menu);
 
         repository = new Repository(this);
+        courseworkApi = new CourseworkApi(this);
+
         rvMenu = findViewById(R.id.rv_menu_items);
         rvMenu.setLayoutManager(new LinearLayoutManager(this));
 
-        loadData();
+        // Initialize Loading Views
+        pbLoading = findViewById(R.id.pb_loading);
+        tvStatusMessage = findViewById(R.id.tv_status_message);
 
         EditText etSearch = findViewById(R.id.et_search);
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -80,13 +92,33 @@ public class GuestMenuActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        loadData();
     }
 
     private void loadData() {
+        // Show loading state on Main Thread
+        showLoading(true);
+        tvStatusMessage.setText("Loading menu...");
+
         originalMenuList = repository.getLocalMenuItems();
-        // Pass a copy so the adapter has its own list, although we update it via updateList
         adapter = new GuestMenuAdapter(this, new ArrayList<>(originalMenuList));
         rvMenu.setAdapter(adapter);
+        
+        // Hide loading
+        showLoading(false);
+    }
+    
+    private void showLoading(boolean isLoading) {
+        if (isLoading) {
+            pbLoading.setVisibility(View.VISIBLE);
+            tvStatusMessage.setVisibility(View.VISIBLE);
+            rvMenu.setVisibility(View.GONE);
+        } else {
+            pbLoading.setVisibility(View.GONE);
+            tvStatusMessage.setVisibility(View.GONE);
+            rvMenu.setVisibility(View.VISIBLE);
+        }
     }
     
     private void filterMenu(String text) {
@@ -108,8 +140,7 @@ public class GuestMenuActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload data to catch any updates from staff side, but this resets search.
-        // For a simple implementation, this is acceptable.
+        // Reload data to catch any updates from staff side
         loadData();
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_menu);
