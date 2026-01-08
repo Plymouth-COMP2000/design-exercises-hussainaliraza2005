@@ -58,15 +58,25 @@ public class GuestLoginActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(CourseworkApi.ApiError error) {
-                    // If status code is 0, it's a network error (timeout, no connection)
-                    if (error.getStatusCode() == 0) {
-                        Toast.makeText(GuestLoginActivity.this, "Network unavailable, trying offline login...", Toast.LENGTH_SHORT).show();
-                        fallbackToLocalLogin(emailOrUsername, password);
+                    int code = (error != null) ? error.getStatusCode() : -1;
+                    String msg = (error != null && error.getMessage() != null) ? error.getMessage() : "Unknown error";
+
+                    if (code == 0) {
+                        Toast.makeText(GuestLoginActivity.this,
+                                "Network unavailable, trying offline login...",
+                                Toast.LENGTH_SHORT).show();
+                        fallbackToLocalLogin(username, password);
+                        return;
+                    }
+
+                    // API is reachable; do NOT fallback (prevents incorrect “offline” success/paths).
+                    if (code == 404) {
+                        Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
                     } else {
-                        // For any other error (404 Not Found, 400 Bad Request, etc.), show invalid credentials
-                        Toast.makeText(GuestLoginActivity.this, "Invalid credentials or account not found", Toast.LENGTH_LONG).show();
+                        Toast.makeText(GuestLoginActivity.this, "Login failed (" + code + "): " + msg, Toast.LENGTH_LONG).show();
                     }
                 }
+
             });
         });
 
