@@ -16,6 +16,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private CourseworkApi courseworkApi;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,22 +24,29 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.a_role_selection);
 
         courseworkApi = new CourseworkApi(this);
+        prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
 
-        // One-time DB initialisation
+        // One-time DB initialisation (server-side student DB)
         initializeStudentDatabase();
 
         MaterialButton btnGuest = findViewById(R.id.btn_continue_as_guest);
         MaterialButton btnStaff = findViewById(R.id.btn_continue_as_staff);
-        MaterialButton btnApiCheck = findViewById(R.id.btn_api_check); // may not exist in layout
+        MaterialButton btnApiCheck = findViewById(R.id.btn_api_check); // optional; may not exist in layout
 
-        btnGuest.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, GuestLoginActivity.class)));
-        btnStaff.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, StaffLoginActivity.class)));
+        btnGuest.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, GuestLoginActivity.class))
+        );
+
+        btnStaff.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, StaffLoginActivity.class))
+        );
 
         if (btnApiCheck != null) {
             btnApiCheck.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(MainActivity.this, "Checking API…", Toast.LENGTH_SHORT).show();
+
                     courseworkApi.readAllUsers(new CourseworkApi.ApiCallback<List<User>>() {
                         @Override
                         public void onSuccess(List<User> data) {
@@ -55,13 +63,16 @@ public class MainActivity extends AppCompatActivity {
                             if (code == 400 && msg.toLowerCase().contains("already exists")) {
                                 prefs.edit().putBoolean("API_DB_INITIALISED", true).apply();
                                 Log.d("MainActivity", "API DB already exists; marking initialised.");
-                                return; // do not show failure toast
+                                return;
                             }
 
-                            Log.e("MainActivity", "API init failed (" + code + "): " + msg);
-                            Toast.makeText(MainActivity.this, "API init failed (" + code + ")", Toast.LENGTH_SHORT).show();
-                        }
+                            Log.e("MainActivity", "API check failed (" + code + "): " + msg);
 
+                            // Avoid noisy UX for transient network issues.
+                            if (code != 0) {
+                                Toast.makeText(MainActivity.this, "API check failed (" + code + ")", Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     });
                 }
             });
@@ -69,8 +80,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeStudentDatabase() {
-        SharedPreferences prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
-
         boolean isInitialised = prefs.getBoolean("API_DB_INITIALISED", false);
         if (isInitialised) {
             Log.d("MainActivity", "API DB already initialised");
@@ -96,9 +105,15 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
+                // If network is unavailable (code==0), log only; do not toast on every launch/logout.
+                if (code == 0) {
+                    Log.w("MainActivity", "API init skipped (network unavailable): " + msg);
+                    return;
+                }
+
                 Log.e("MainActivity", "API init failed (" + code + "): " + msg);
                 Toast.makeText(MainActivity.this, "API init failed (" + code + ")", Toast.LENGTH_SHORT).show();
             }
         });
     }
-
+}

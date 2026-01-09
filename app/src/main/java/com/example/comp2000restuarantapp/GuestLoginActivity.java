@@ -11,6 +11,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.Locale;
+
 public class GuestLoginActivity extends AppCompatActivity {
 
     private EditText etEmail;
@@ -27,6 +29,7 @@ public class GuestLoginActivity extends AppCompatActivity {
 
         etEmail = findViewById(R.id.et_email);
         EditText etPassword = findViewById(R.id.et_password);
+
         Button btnLogin = findViewById(R.id.btn_login);
         TextView tvRegister = findViewById(R.id.tv_register_link);
         TextView tvForgotPassword = findViewById(R.id.tv_forgot_password_link);
@@ -46,11 +49,30 @@ public class GuestLoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // Normalise for consistent local cache key
+            final String key = emailOrUsername.toLowerCase(Locale.ROOT);
+
             courseworkApi.readUser(emailOrUsername, new CourseworkApi.ApiCallback<User>() {
                 @Override
                 public void onSuccess(User apiUser) {
-                    if (apiUser != null && password.equals(apiUser.getPassword())) {
-                        proceedToDashboard(apiUser.getEmail());
+                    if (apiUser == null) {
+                        Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Optional: enforce role separation (prevents staff account using guest login)
+                    String type = apiUser.getUserType();
+                    if (type != null && !type.isEmpty() && !"Guest".equalsIgnoreCase(type)) {
+                        Toast.makeText(GuestLoginActivity.this, "This account is Staff. Use Staff login.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (password.equals(apiUser.getPassword())) {
+                        // Cache successful credentials for offline login continuity
+                        if (!repository.checkUserExists(key)) {
+                            repository.registerUser(key, password);
+                        }
+                        proceedToDashboard(apiUser.getEmail() != null && !apiUser.getEmail().isEmpty() ? apiUser.getEmail() : key);
                     } else {
                         Toast.makeText(GuestLoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
                     }
@@ -61,46 +83,39 @@ public class GuestLoginActivity extends AppCompatActivity {
                     int code = (error != null) ? error.getStatusCode() : -1;
                     String msg = (error != null && error.getMessage() != null) ? error.getMessage() : "Unknown error";
 
+                    // Network unavailable => offline fallback is valid
                     if (code == 0) {
                         Toast.makeText(GuestLoginActivity.this,
                                 "Network unavailable, trying offline login...",
                                 Toast.LENGTH_SHORT).show();
-                        fallbackToLocalLogin(username, password);
+                        fallbackToLocalLogin(key, password);
                         return;
                     }
 
-                    // API is reachable; do NOT fallback (prevents incorrect “offline” success/paths).
+                    // API reachable; do NOT fallback (prevents incorrect offline success paths)
                     if (code == 404) {
                         Toast.makeText(GuestLoginActivity.this, "No account found. Please register.", Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(GuestLoginActivity.this, "Login failed (" + code + "): " + msg, Toast.LENGTH_LONG).show();
                     }
                 }
-
             });
         });
 
-        tvRegister.setOnClickListener(v -> {
-            Intent intent = new Intent(GuestLoginActivity.this, GuestRegisterActivity.class);
-            startActivity(intent);
-        });
+        tvRegister.setOnClickListener(v -> startActivity(new Intent(GuestLoginActivity.this, GuestRegisterActivity.class)));
 
-        tvForgotPassword.setOnClickListener(v -> {
-            Intent intent = new Intent(GuestLoginActivity.this, GuestForgotPasswordActivity.class);
-            startActivity(intent);
-        });
+        tvForgotPassword.setOnClickListener(v -> startActivity(new Intent(GuestLoginActivity.this, GuestForgotPasswordActivity.class)));
 
         View.OnClickListener backListener = v -> finish();
         btnBack.setOnClickListener(backListener);
         tvBack.setOnClickListener(backListener);
     }
 
-    private void fallbackToLocalLogin(String email, String password) {
-        String lowerEmail = email.toLowerCase();
-        if (repository.checkUser(lowerEmail, password)) {
-            proceedToDashboard(lowerEmail);
+    private void fallbackToLocalLogin(String emailLower, String password) {
+        if (repository.checkUser(emailLower, password)) {
+            proceedToDashboard(emailLower);
         } else {
-            if (!repository.checkUserExists(lowerEmail)) {
+            if (!repository.checkUserExists(emailLower)) {
                 Toast.makeText(GuestLoginActivity.this, "No account found offline.", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(GuestLoginActivity.this, "Invalid credentials (offline)", Toast.LENGTH_SHORT).show();
