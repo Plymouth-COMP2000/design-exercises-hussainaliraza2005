@@ -1,0 +1,119 @@
+package com.example.comp2000restuarantapp;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.button.MaterialButton;
+
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private CourseworkApi courseworkApi;
+    private SharedPreferences prefs;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.a_role_selection);
+
+        courseworkApi = new CourseworkApi(this);
+        prefs = getSharedPreferences("RestaurantAppPrefs", MODE_PRIVATE);
+
+        // One-time DB initialisation (server-side student DB)
+        initializeStudentDatabase();
+
+        MaterialButton btnGuest = findViewById(R.id.btn_continue_as_guest);
+        MaterialButton btnStaff = findViewById(R.id.btn_continue_as_staff);
+        MaterialButton btnApiCheck = findViewById(R.id.btn_api_check); // optional; may not exist in layout
+
+        btnGuest.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, GuestLoginActivity.class))
+        );
+
+        btnStaff.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, StaffLoginActivity.class))
+        );
+
+        if (btnApiCheck != null) {
+            btnApiCheck.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(MainActivity.this, "Checking API…", Toast.LENGTH_SHORT).show();
+
+                    courseworkApi.readAllUsers(new CourseworkApi.ApiCallback<List<User>>() {
+                        @Override
+                        public void onSuccess(List<User> data) {
+                            int count = (data != null) ? data.size() : 0;
+                            Toast.makeText(MainActivity.this, "API OK: " + count + " users", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onError(CourseworkApi.ApiError error) {
+                            int code = (error != null) ? error.getStatusCode() : -1;
+                            String msg = (error != null && error.getMessage() != null) ? error.getMessage() : "";
+
+                            // If the student DB already exists, treat as success and set the flag.
+                            if (code == 400 && msg.toLowerCase().contains("already exists")) {
+                                prefs.edit().putBoolean("API_DB_INITIALISED", true).apply();
+                                Log.d("MainActivity", "API DB already exists; marking initialised.");
+                                return;
+                            }
+
+                            Log.e("MainActivity", "API check failed (" + code + "): " + msg);
+
+                            // Avoid noisy UX for transient network issues.
+                            if (code != 0) {
+                                Toast.makeText(MainActivity.this, "API check failed (" + code + ")", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    private void initializeStudentDatabase() {
+        boolean isInitialised = prefs.getBoolean("API_DB_INITIALISED", false);
+        if (isInitialised) {
+            Log.d("MainActivity", "API DB already initialised");
+            return;
+        }
+
+        courseworkApi.createStudentDatabase(new CourseworkApi.ApiCallback<String>() {
+            @Override
+            public void onSuccess(String data) {
+                prefs.edit().putBoolean("API_DB_INITIALISED", true).apply();
+                Log.d("MainActivity", "API DB initialised: " + data);
+            }
+
+            @Override
+            public void onError(CourseworkApi.ApiError error) {
+                int code = (error != null) ? error.getStatusCode() : -1;
+                String msg = (error != null && error.getMessage() != null) ? error.getMessage() : "Unknown error";
+
+                // Server returns 400 when the DB already exists — treat as success.
+                if (code == 400 && msg.toLowerCase().contains("already exists")) {
+                    prefs.edit().putBoolean("API_DB_INITIALISED", true).apply();
+                    Log.d("MainActivity", "API DB already exists; marking initialised.");
+                    return;
+                }
+
+                // If network is unavailable (code==0), log only; do not toast on every launch/logout.
+                if (code == 0) {
+                    Log.w("MainActivity", "API init skipped (network unavailable): " + msg);
+                    return;
+                }
+
+                Log.e("MainActivity", "API init failed (" + code + "): " + msg);
+                Toast.makeText(MainActivity.this, "API init failed (" + code + ")", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+}
